@@ -1,4 +1,4 @@
-package courierTest;
+package couriertest;
 
 import courier.Courier;
 import courier.CourierClient;
@@ -12,6 +12,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.apache.http.HttpStatus.*;
 import static org.junit.Assert.*;
 
 public class CourierClientTest {
@@ -28,20 +29,20 @@ public class CourierClientTest {
 
     @After
     @Step("Удаляем тестовые данные")
-    public void cleanup() {
-        courierClient.delete(id);
+    public void cleanUp() {
+        courierClient.courierDelete(id);
     }
 
     @Test
     @DisplayName("Создание курьера")
     @Description("Создаем курьера и логинимся")
-    public void CourierCanBeCreateTest() {
-        ValidatableResponse response = courierClient.create(courier);
-        response.statusCode(201);
+    public void courierCanBeCreateTest() {
+        ValidatableResponse response = courierClient.courierCreate(courier);
+        response.statusCode(SC_CREATED);
         boolean status = response.extract().path("ok");
         assertTrue(status);
-        ValidatableResponse loginResponce = courierClient.login(new CourierCredentials(courier.getLogin(), courier.getPassword()));
-        loginResponce.statusCode(200);
+        ValidatableResponse loginResponce = courierClient.courierLogin(new CourierCredentials(courier.getLogin(), courier.getPassword()));
+        loginResponce.statusCode(SC_OK);
         id = loginResponce.extract().path("id");
         assertNotNull(id);
 
@@ -50,10 +51,10 @@ public class CourierClientTest {
     @Test
     @DisplayName("Пустой логин")
     @Description("Проверяем, что нельзя создать курьера с пустым логином")
-    public void CourierCanNotBeCreateWithoutLoginTest() {
+    public void courierCanNotBeCreateWithoutLoginTest() {
         courier.setLogin("");
-        ValidatableResponse response = courierClient.create(courier);
-        response.statusCode(400);
+        ValidatableResponse response = courierClient.courierCreate(courier);
+        response.statusCode(SC_BAD_REQUEST);
         String message = response.extract().path("message");
         assertEquals("Недостаточно данных для создания учетной записи", message);
     }
@@ -61,10 +62,10 @@ public class CourierClientTest {
     @Test
     @DisplayName("Пустой пароль")
     @Description("Проверем, что нельз создать курьера без пароля")
-    public void CourierCanNotBeCreatedWithoutPasswordTest() {
+    public void courierCanNotBeCreatedWithoutPasswordTest() {
         courier.setPassword("");
-        ValidatableResponse response = courierClient.create(courier);
-        response.statusCode(400);
+        ValidatableResponse response = courierClient.courierCreate(courier);
+        response.statusCode(SC_BAD_REQUEST);
         String message = response.extract().path("message");
         assertEquals("Недостаточно данных для создания учетной записи", message);
     }
@@ -72,11 +73,11 @@ public class CourierClientTest {
     @Test
     @DisplayName("Пустой пароль и логин")
     @Description("Проверяем, что нельзя создать курьера без логина и пароля")
-    public void CourierCanNotBeCreatedWithoutPasswordAndLoginTest() {
+    public void courierCanNotBeCreatedWithoutPasswordAndLoginTest() {
         courier.setPassword("");
         courier.setLogin("");
-        ValidatableResponse response = courierClient.create(courier);
-        response.statusCode(400);
+        ValidatableResponse response = courierClient.courierCreate(courier);
+        response.statusCode(SC_BAD_REQUEST);
         String message = response.extract().path("message");
         assertEquals("Недостаточно данных для создания учетной записи", message);
     }
@@ -84,11 +85,11 @@ public class CourierClientTest {
     @Test
     @DisplayName("Нельзя создать двух курьеров с одним логином")
     @Description("Проверяем, что нельзя создать 2ух курьеров с одинаковым логином")
-    public void CourierCanNotBeCreatedWithSameLogin() {
-        courierClient.create(courier);
+    public void courierCanNotBeCreatedWithSameLogin() {
+        courierClient.courierCreate(courier);
         Courier duplicateCourier = new Courier(courier.getLogin(), "new password", "New Name");
-        ValidatableResponse response = courierClient.create(duplicateCourier);
-        response.statusCode(409);
+        ValidatableResponse response = courierClient.courierCreate(duplicateCourier);
+        response.statusCode(SC_CONFLICT);
         String message = response.extract().path("message");
         assertEquals("Этот логин уже используется. Попробуйте другой.", message);
 
